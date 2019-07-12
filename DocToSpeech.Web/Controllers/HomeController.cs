@@ -87,7 +87,7 @@ namespace DocToSpeech.Web.Controllers
 					var blobClient = storageAccount.CreateCloudBlobClient();
 					var containerClient = blobClient.GetContainerReference("uploads");
 
-					var blobName = $"{Path.GetFileName(formFile.FileName)}_{Voice}";
+					var blobName = $"{Path.GetFileNameWithoutExtension(formFile.FileName)}_{Voice}{Path.GetExtension(formFile.FileName)}";
 					var blob = containerClient.GetBlockBlobReference(blobName);
 					await blob.UploadFromStreamAsync(stream);
 

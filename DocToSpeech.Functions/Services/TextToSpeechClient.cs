@@ -62,7 +62,6 @@ namespace DocToSpeech.Functions
 						using (var speechResponse = await client.SendAsync(request).ConfigureAwait(false))
 						{
 							speechResponse.EnsureSuccessStatusCode();
-							// Asynchronously read the response
 							using (var dataStream = await speechResponse.Content.ReadAsStreamAsync().ConfigureAwait(false))
 							{
 								var fileName = Path.GetTempPath() + "/temp.wav";

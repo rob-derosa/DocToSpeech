@@ -74,6 +74,9 @@ namespace DocToSpeech.Functions
 		[FunctionName(nameof(ConvertTextToSpeechSsml))]
 		public static async Task<ConvertResponse> ConvertTextToSpeechSsml([ActivityTrigger] ConvertResponse response, ILogger log, ExecutionContext context)
 		{
+			if(response.ErrorMessage != null)
+				return response;
+	
 			var config = context.GetConfig();
 			var client = new TextToSpeechClient(config);
 
