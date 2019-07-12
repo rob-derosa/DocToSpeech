@@ -39,9 +39,18 @@ namespace DocToSpeech.Functions
 				var prosody = $"<prosody rate='{r.Speed}.00%' pitch='{r.Pitch}' volume='{r.Volume}'>";
 
 				response.Transcript = response.Transcript.Replace("&", "and");
+
+				var maxChars = 990;
+				var transcript = response.Transcript;
+				if(transcript.Length > 990)
+				{
+					var intro = "This transcript is too long and has been shortened automatically." + Environment.NewLine;
+					transcript = intro + transcript.Substring(0, maxChars - intro.Length);
+				}
+
 				string body = $@"<speak version='1.0' xmlns='https://www.w3.org/2001/10/synthesis' xml:lang='en-US'>
-					<voice name='Microsoft Server Speech Text to Speech Voice (en-US, {response.Request.VoiceToUse})'>{prosody}" +
-						response.Transcript + "</prosody></voice></speak>";
+					<voice name='Microsoft Server Speech Text to Speech Voice (en-US, {r.VoiceToUse})'>{prosody}" +
+						transcript + "</prosody></voice></speak>";
 
 				Console.WriteLine();
 				Console.WriteLine(body);
