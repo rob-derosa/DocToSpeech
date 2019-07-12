@@ -1,0 +1,206 @@
+﻿@using System
+@using Microsoft.AspNetCore.Http
+@model DocToSpeech.Web.Controllers.HomeController
+
+@{
+    ViewData["Title"] = "Doc to Speech";
+}
+
+<div class="text-center">
+    <h2 class="display-4">Welcome to Doc to Speech</h2>
+</div>
+
+<div style="width: 800px; margin-top: 40px" class="container center">
+
+	<div class="center" style="margin: 30px 0px">Upload an image (.jpg, .png) or PDF to have it translated into an audio .wav file and .txt transcript</div>
+
+	<div class="input-group border" style="padding: 30px">
+
+		<div class="col-md-10 center" style="margin-bottom: 60px">
+
+			@if(Context.Request.Query.ContainsKey("requestId"))
+			{
+				<div id="convertingLabel" class="center alert alert-primary">
+					<div class="spinner-border spinner-border-sm text-primary" role="status" style="margin-right: 10px" >
+						<span class="sr-only">Loading...</span>
+					</div>
+
+					<span>Converting now...</span>
+				</div>
+			}
+
+			<div id="convertingLabel" class="center alert alert-danger" style="display: none">
+				<div id="conversionErrorLabel">ERROR: Unable to read document.</div>
+			</div>
+
+			<div id="resultContainer" class="container" style="display: none; padding: 0px">
+				<div style="font-size: 16px; margin: 20px 0px">Conversion complete for: <span id="blobLabel"></span></div>
+				<div class="row">
+					<div class="col-md">
+						<div class="list-group">
+							<div class="list-group-item list-group-item-action" style="font-weight: bold">Audio Transcript</div>
+							<a id="audioTranscriptLink" class="list-group-item list-group-item-action list-group-item-success"></a>
+						</div>
+					</div>
+					<div class="col-md">
+						<div class="list-group">
+							<div class="list-group-item list-group-item-action" style="font-weight: bold">Text Transcript</div>
+							<a id="textTranscriptLink" class="list-group-item list-group-item-action list-group-item-success"></a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+
+
+		<div class="col-md-10 center">
+
+			@if(@TempData["Error"] != null)
+			{
+				<div class="alert alert-danger" role="alert">@TempData["Error"]</div>
+			}
+			
+			<form method="post" enctype="multipart/form-data" asp-controller="Home" asp-action="post" class="form">
+				<div class="form-group">
+					<label class="control-label">PDF or image to upload</label>
+					<div class="custom-file">
+						<input type="file" name="uploadFiles" class="custom-file-input" id="customFile">
+						<label class="custom-file-label" for="customFile">Choose file</label>
+					</div>
+				</div>
+				<div class="form-group">
+					<label asp-for="Voice"` class="control-label">Choose a voice</label>
+					<select asp-for="Voice" class="form-control">
+						<option value="JessaNeural">Jessa (neural)</option>
+						<option value="GuyNeural">Guy (neural)</option>
+						<option value="Jessa24kRUS">Jessa</option>
+						<option value="BenjaminRUS">Benjamin</option>
+						<option value="Guy24kRUS">Guy</option>
+						<option value="ZiraRUS">Zira</option>
+					</select>
+				</div>
+				<div class="form-group">
+					<label class="control-label" for="speed">Speed</label>
+					<input type="range" id="speed" asp-for="Speed" class="form-control-range" min="-100" max="100" step="1" />
+				</div>
+				<div class="form-group">
+					<label class="control-label" for="volume">Volume</label>
+					<input type="range" id="volume" asp-for="Volume" class="form-control-range" min="-100" max="100" step="1" />
+				</div>
+				<div class="form-group">
+					<label asp-for="Pitch"` class="control-label">Pitch</label>
+					<select asp-for="Pitch" class="form-control">
+						<option value="default">Default</option>
+						<option value="x-low">Very Low</option>
+						<option value="low">Low</option>
+						<option value="medium">Medium</option>
+						<option value="high">High</option>
+						<option value="x-high">Very High</option>
+					</select>
+				</div>
+				<div class="form-group" style="margin-top: 30px">
+					<hr style="height: 1px" />
+
+					<button id="uploadButton" class="btn btn-primary" type="submit">
+						<span id="uploadSpinner" style="display: none" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+							Convert to Speech
+					</button>
+					<!-- <input type="submit" value="Convert to Speech" class="btn btn-primary" /> -->
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+
+<script src="~/lib/signalr/signalr.js"></script>
+<script lang="javascript">
+
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("@ViewBag.ApiEndpoint")
+    .configureLogging(signalR.LogLevel.Information)
+    .build();
+
+connection.start().then(function () {
+    console.log("connected");
+});
+
+connection.on("newSpeechFile", (response) => {
+
+	console.log("Incoming new speech request:\n" + response);
+	var urlParams = new URLSearchParams(window.location.search);
+
+	if(response.RequestId == urlParams.get('requestId')) {
+		const textLink = document.getElementById("textTranscriptLink");
+		const audioLink = document.getElementById("audioTranscriptLink");
+		const blobName = document.getElementById("blobLabel");
+
+		if(response.TranscriptBlobUrl)
+		{
+			textLink.textContent = "Download here";
+			textLink.href = response.TranscriptBlobUrl;
+		}
+		else {
+			textLink.textContent = "ERROR";
+		}
+
+		if(response.SpeechAudioBlobUrl)
+		{
+			audioLink.textContent = "Download here";
+			audioLink.href = response.SpeechAudioBlobUrl;
+		}
+		else {
+			audioLink.textContent = "ERROR";
+		}
+
+		blobName.textContent = response.Request.BlobName;
+		resultContainer.style.display = "block";
+		document.getElementById("convertingLabel").style.display = "none";
+
+		if(response.ErrorMessage)
+		{
+			document.getElementById("conversionError").style.display = "block";
+			document.getElementById("conversionErrorLabel").textContent = "ERROR: " + response.ErrorMessage
+		}
+	}
+	else
+	{
+		console.log("\n\ndoes not match this client");
+	}
+});
+
+function updateUploadButton() {
+	var fileName = $(this).val();
+	alert(fileName);
+	
+	//if(fileName){
+		$(this.textContent = "Uploading...");
+		$('uploadSpinner').style.display = "block";
+	//}
+}
+
+
+$('#customFile').on('change',function(){
+	var fileName = $(this).val();
+	$(this).next('.custom-file-label').html(fileName);
+})
+
+
+</script>
+
+<style>
+
+.form-group
+{
+	margin-bottom: 30px;
+}
+
+.center
+{
+	display: block;
+	margin-left: auto;
+	margin-right: auto;	
+}
+
+</style>
