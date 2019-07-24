@@ -98,14 +98,14 @@ namespace DocToSpeech.Functions
 					Line lastLine = null;
 					foreach (var line in page.Lines)
 					{
-						if (lastLine?.Words.Count >= 4)
-						{
-							text.Append($" {line.Text}");
-						}
-						else
-						{
+						// if (lastLine?.Words.Count >= 4)
+						// {
+						// 	text.Append($" {line.Text}");
+						// }
+						// else
+						// {
 							text.Append(Environment.NewLine + line.Text);
-						}
+						// }
 
 						lastLine = line;
 					}

@@ -66,11 +66,6 @@ namespace DocToSpeech.Functions
 			return newResponse;
 		}
 
-		// [FunctionName(nameof(ExtractTextFromImageReadApi))]
-		// public static async Task<string> ExtractTextFromImageReadApi([ActivityTrigger] string blobName, ILogger log, ExecutionContext context)
-		// {
-		// }
-
 		[FunctionName(nameof(ConvertTextToSpeechSsml))]
 		public static async Task<ConvertResponse> ConvertTextToSpeechSsml([ActivityTrigger] ConvertResponse response, ILogger log, ExecutionContext context)
 		{
@@ -83,11 +78,5 @@ namespace DocToSpeech.Functions
 			var newResponse = await client.ConvertTextToSpeechSsml(response);
 			return newResponse;
 		}
-
-		// [FunctionName(nameof(ConvertTextToSpeechStandard))]
-		// public static async Task<string> ConvertTextToSpeechStandard([ActivityTrigger] DurableActivityContext inputs, ILogger log, ExecutionContext context)
-		// {
-
-		// }
     }
 }

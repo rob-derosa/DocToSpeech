@@ -19,7 +19,7 @@ namespace DocToSpeech.Functions
 		public async Task<ConvertResponse> ConvertTextToSpeechSsml(ConvertResponse response)
 		{
 			var ext = new FileInfo(response.Request.BlobName).Extension;
-			var waveName = response.Request.BlobName.Replace(ext, ".wav");
+			var waveName = response.Request.BlobName.Replace(ext, ".mp3");
 
 			try
 			{
@@ -40,9 +40,9 @@ namespace DocToSpeech.Functions
 
 				response.Transcript = response.Transcript.Replace("&", "and");
 
-				var maxChars = 990;
 				var transcript = response.Transcript;
-				if(transcript.Length > 990)
+				var maxChars = 20000;
+				if(transcript.Length > maxChars)
 				{
 					var intro = "This transcript is too long and has been shortened automatically." + Environment.NewLine;
 					transcript = intro + transcript.Substring(0, maxChars - intro.Length);
@@ -65,15 +65,21 @@ namespace DocToSpeech.Functions
 						request.Headers.Add("Authorization", "Bearer " + accessToken);
 						request.Headers.Add("Connection", "Keep-Alive");
 						request.Headers.Add("User-Agent", _config["speech:resourceName"]);
-						request.Headers.Add("X-Microsoft-OutputFormat", "riff-24khz-16bit-mono-pcm");
+						request.Headers.Add("X-Microsoft-OutputFormat", "audio-16khz-64kbitrate-mono-mp3");
 
 						Console.WriteLine("Calling the TTS service. Please wait... \n");
 						using (var speechResponse = await client.SendAsync(request).ConfigureAwait(false))
 						{
+							if((int)speechResponse.StatusCode == 503)
+							{
+								response.ErrorMessage = "Transcript too large to convert to speech.";
+								return response;
+							}
+
 							speechResponse.EnsureSuccessStatusCode();
 							using (var dataStream = await speechResponse.Content.ReadAsStreamAsync().ConfigureAwait(false))
 							{
-								var fileName = Path.GetTempPath() + "/temp.wav";
+								var fileName = Path.GetTempPath() + "/temp.mp3";
 
 								Console.WriteLine("Your speech file is being written to temp file...");
 								using (var fileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.Write))
