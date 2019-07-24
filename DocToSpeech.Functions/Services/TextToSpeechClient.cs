@@ -41,11 +41,12 @@ namespace DocToSpeech.Functions
 				response.Transcript = response.Transcript.Replace("&", "and");
 
 				var transcript = response.Transcript;
-				var maxChars = 20000;
+				var maxChars = 10000;
 				if(transcript.Length > maxChars)
 				{
-					var intro = "This transcript is too long and has been shortened automatically." + Environment.NewLine;
-					transcript = intro + transcript.Substring(0, maxChars - intro.Length);
+					// var intro = "This transcript is too long and has been shortened automatically." + Environment.NewLine;
+					//transcript = intro + transcript.Substring(0, maxChars - intro.Length);
+					transcript = transcript.Substring(0, maxChars);
 				}
 
 				string body = $@"<speak version='1.0' xmlns='https://www.w3.org/2001/10/synthesis' xml:lang='en-US'>
